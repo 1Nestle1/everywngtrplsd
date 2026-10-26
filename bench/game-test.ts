@@ -2,6 +2,7 @@
 // Запуск: npm run test:game
 
 import { UNLOCKS } from "../src/game/api";
+import { currentGuide } from "../src/game/guide";
 import { parse } from "../src/game/lang/parser";
 import { Runner } from "../src/game/runner";
 import { World } from "../src/game/world";
@@ -244,6 +245,37 @@ harvest()
   check("ранняя игра проходится: Циклы → Расширение → Посадка → Сенсоры → Переменные",
     errs.length === 0 && ["loops", "expand", "plant", "senses", "variables"].every((u) => steps.includes(u)),
     `${steps.join(", ")} ${errs.join()} | ${JSON.stringify(w.inventory)}`);
+}
+
+// 10. Древо навыков: места не пересекаются, связи ведут к существующим навыкам и только вправо
+{
+  const at = new Set(UNLOCKS.map((u) => u.at.join(",")));
+  const byId = new Map(UNLOCKS.map((u) => [u.id, u]));
+  const badLinks = UNLOCKS.flatMap((u) => u.requires.filter((r) => !byId.has(r) || byId.get(r)!.at[0] >= u.at[0]).map((r) => `${r}→${u.id}`));
+  check("древо навыков: у каждого навыка своё место, связи идут слева направо", at.size === UNLOCKS.length && !badLinks.length, badLinks.join());
+}
+
+// 11. Урожайность: «Густой мох» добавляет к множителю биомассы
+{
+  const w = new World();
+  w.applyUnlock("moss_yield");
+  w.cell().progress = 1;
+  w.harvest();
+  check("«Густой мох» удваивает биомассу", w.inventory.Biomass === 2, `${w.inventory.Biomass}`);
+}
+
+// 12. Подсказки ведут по навыкам до победы, и цель всегда достижима
+{
+  const w = new World();
+  const seen: string[] = [];
+  for (let i = 0; i < 20; i++) {
+    const g = currentGuide(w);
+    if (!g.target) break;
+    if (!w.visibleUnlock(g.target)) break;
+    seen.push(g.target);
+    w.applyUnlock(g.target);
+  }
+  check("подсказки ведут от «Циклов» до «Маяка»", seen[0] === "loops" && seen.at(-1) === "beacon" && w.won, seen.join(" → "));
 }
 
 console.log(failed ?`\nПровалено: ${failed}` : "\nВсе проверки пройдены");

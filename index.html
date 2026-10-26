@@ -18,9 +18,9 @@
       <div id="inventory"></div>
       <div class="top-right">
         <span class="speed-label">Скорость <b id="speed">×1</b></span>
-        <button id="menu-btn" class="icon-btn" title="Меню">☰</button>
+        <button id="menu-btn" class="icon-btn" title="Меню" aria-label="Меню"></button>
         <div id="menu" hidden>
-          <button id="sandbox-btn">Песочница: открыть всё</button>
+          <button id="sandbox-btn">Песочница: изучить всё</button>
           <button id="reset-btn" class="danger">Сбросить прогресс</button>
           <a href="./3d.html">Тест производительности 3D</a>
         </div>
@@ -30,17 +30,19 @@
     <div id="windows"></div>
 
     <footer id="bottombar">
-      <div id="goal"><span class="goal-label">Цель</span><span id="goal-text"></span></div>
-      <nav id="dock"></nav>
+      <div class="guide">
+        <div id="coach" role="status" hidden></div>
+        <div id="goal" aria-label="Текущая цель"></div>
+      </div>
+      <nav id="dock" aria-label="Окна"></nav>
     </footer>
 
-    <div id="toasts"></div>
+    <div id="toasts" aria-live="polite"></div>
 
     <div id="victory" hidden>
       <div class="victory-card">
-        <p class="victory-kicker">Маяк колонии запущен</p>
-        <h2>Колонисты летят.<br />Вас заменили не зря.</h2>
-        <p>Вы автоматизировали астероид от горстки мха до золота из лабиринта — только кодом.</p>
+        <h2>Маяк колонии запущен.<br />Колонисты летят.</h2>
+        <p>Вас заменили не зря: вы автоматизировали астероид от горстки мха до золота из лабиринта — только кодом.</p>
         <button id="victory-close" class="run-btn">Продолжить игру</button>
       </div>
     </div>

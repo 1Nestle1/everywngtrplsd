@@ -2,7 +2,7 @@
 // Рендер и интерфейс только читают отсюда состояние.
 
 import {
-  type Dir, type Entity, type Ground, type Item, ITEMS, PLANTS, SPEEDS, UNLOCK_BY_ID, WORLD_SIZES,
+  type Dir, type Entity, type Ground, type Item, ITEMS, PLANTS, SPEEDS, UNLOCK_BY_ID, WORLD_SIZES, YIELD_UNLOCKS,
 } from "./api";
 
 export interface Cell {
@@ -29,7 +29,9 @@ export type WorldEvent =
   | { type: "print"; text: string }
   | { type: "unlock"; id: string }
   | { type: "maze" }
-  | { type: "win" };
+  | { type: "win" }
+  /** Повод для подсказки игроку: незрелый урожай, неудачная посадка и т. п. */
+  | { type: "tip"; id: string };
 
 export class World {
   size = 1;
@@ -166,6 +168,7 @@ export class World {
     this.usePower();
     if (!this.canMove(dir)) return false;
     const n = this.neighbor(dir)!;
+    if (this.size > 1 && !this.neighbor(dir, false)) this.tip("wrap");
     this.drone.x = n[0];
     this.drone.y = n[1];
     return true;
@@ -191,6 +194,7 @@ export class World {
     // незрелый мох не портится — иначе первый цикл «while True: harvest()» ничего бы не давал
     if (c.entity === "Moss" && c.progress < 1) return false;
     if (c.progress < 1 || c.entity === "Dead_Geode") {
+      this.tip(c.entity === "Dead_Geode" ? "dead-geode" : "unripe");
       this.clearCell(c);
       return false;
     }
@@ -229,7 +233,15 @@ export class World {
     return true;
   }
 
+  /** Отмечает повод для подсказки; возвращает false, чтобы сразу вернуть его из действия. */
+  private tip(id: string): false {
+    this.events.push({ type: "tip", id });
+    return false;
+  }
+
   private give(item: Item, amount: number, x: number, y: number): void {
+    const yieldUnlock = YIELD_UNLOCKS[item];
+    if (yieldUnlock) amount *= 1 + this.level(yieldUnlock);
     this.inventory[item] += amount;
     this.events.push({ type: "harvest", x, y, item, amount });
   }
@@ -246,10 +258,10 @@ export class World {
     const spec = PLANTS[e];
     const c = this.cell();
     if (!spec || this.maze || !this.has(spec.unlock)) return false;
-    if (c.entity && c.entity !== "Moss" && c.entity !== "Dead_Geode") return false;
     if (c.entity === e) return false;
-    if (!spec.ground.includes(c.ground)) return false;
-    if (!this.canAfford(spec.cost)) return false;
+    if (c.entity && c.entity !== "Moss" && c.entity !== "Dead_Geode") return this.tip("plant-busy");
+    if (!spec.ground.includes(c.ground)) return this.tip("plant-ground");
+    if (!this.canAfford(spec.cost)) return this.tip("plant-cost");
     for (const [k, v] of Object.entries(spec.cost)) this.inventory[k as Item] -= v ?? 0;
     c.entity = e;
     c.progress = 0;

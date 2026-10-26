@@ -81,15 +81,15 @@ export class Runner {
       getSource: (name) => this.cb.getSource(name),
       lockedHint: (name) => {
         const f = FN_BY_NAME.get(name);
-        if (f) return `${name}() пока недоступна — откройте исследование ${unlockName(f.unlock)}`;
+        if (f) return `${name}() пока недоступна — изучите навык ${unlockName(f.unlock)}`;
         const u = ENUM_UNLOCKS[name];
-        if (u) return `${name} пока недоступно — откройте исследование ${unlockName(u)}`;
+        if (u) return `${name} пока недоступно — изучите навык ${unlockName(u)}`;
         return null;
       },
       checkFeatures: (f) => {
         for (const l of LANG_UNLOCKS) {
           if (f[l.feature] && !w.has(l.unlock))
-            throw new LangError(`${l.ru} пока недоступны — откройте исследование ${unlockName(l.unlock)}`, f[l.feature]);
+            throw new LangError(`${l.ru} пока недоступны — изучите навык ${unlockName(l.unlock)}`, f[l.feature]);
         }
       },
     };

@@ -1,5 +1,6 @@
 // Дымовой тест игры в настоящем Chrome/Edge: открывает страницу, кликает «Запуск»,
-// включает песочницу с программой и сохраняет скриншоты в shots/.
+// проверяет древо навыков, подсказки и справку, включает песочницу с программой
+// и сохраняет скриншоты в shots/.
 // Запуск: npm run test:browser
 
 import { existsSync, mkdirSync } from "node:fs";
@@ -40,7 +41,50 @@ try {
   await wait(1500);
   const biomass = await page.evaluate(() => (window as any).__game.world.inventory.Biomass);
   console.log("Биомасса после первого запуска:", biomass);
+  // Пример к цели и разовый совет
+  await page.click(".goal-toggle");
+  await page.evaluate(() => (window as any).__game.world.events.push({ type: "tip", id: "unripe" }));
+  await wait(600);
   await page.screenshot({ path: "shots/1-start.png" });
+
+  // Подсказка при наведении на функцию в редакторе
+  const harvestPos = await page.evaluate(() => {
+    const spans = [...document.querySelectorAll<HTMLElement>(".code-win .cm-line span")];
+    const s = spans.find((el) => el.textContent === "harvest" && !el.closest(".cm-line")!.textContent!.startsWith("#"))!;
+    const r = s.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.move(harvestPos.x, harvestPos.y);
+  await wait(800);
+  const hover = await page.evaluate(() => document.querySelector(".cm-tooltip-hover")?.textContent ?? "");
+  console.log("Подсказка над harvest:", hover ? "есть" : "НЕТ");
+  if (!hover) errors.push("Нет подсказки при наведении на harvest");
+  await page.screenshot({ path: "shots/2-hover.png", clip: { x: 0, y: 40, width: 700, height: 420 } });
+
+  // Древо навыков в начале игры: открывается клавишей T
+  await page.evaluate(() => {
+    const g = (window as any).__game;
+    g.world.inventory.Biomass = 40;
+    g.world.buyUnlock("loops");
+    g.world.buyUnlock("expand");
+    g.world.inventory.Biomass = 22;
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+  await page.mouse.move(800, 600);
+  await page.keyboard.press("KeyT");
+  await wait(600);
+  const treeOpen = await page.evaluate(() => (window as any).__game.skillTree.isOpen);
+  console.log("Древо открылось по T:", treeOpen);
+  if (!treeOpen) errors.push("Древо навыков не открылось по клавише T");
+  await page.screenshot({ path: "shots/3-tree-early.png" });
+  // Изучаем «Скорость» из карточки навыка
+  await page.click('.sk-node[data-id="speed"]');
+  await page.click(".sk-buy");
+  await wait(300);
+  const speedLvl = await page.evaluate(() => (window as any).__game.world.level("speed"));
+  console.log("«Скорость» изучена из древа:", speedLvl === 1);
+  if (speedLvl !== 1) errors.push("Покупка из древа не сработала");
+  await page.keyboard.press("Escape");
 
   // Песочница и программа, засаживающая поле разными растениями
   await page.evaluate(() => {
@@ -66,18 +110,23 @@ try {
     g.runner.start("main");
   });
   await wait(9000);
-  await page.screenshot({ path: "shots/2-sandbox.png" });
+  await page.screenshot({ path: "shots/4-sandbox.png" });
   const state = await page.evaluate(() => {
     const g = (window as any).__game;
     return { size: g.world.size, state: g.runner.state, entities: [...new Set(g.world.cells.map((c: any) => c.entity))] };
   });
   console.log("После песочницы:", JSON.stringify(state));
+  await page.evaluate(() => (window as any).__game.skillTree.open("prisms"));
+  await wait(700);
+  await page.screenshot({ path: "shots/5-tree-sandbox.png" });
+  await page.keyboard.press("Escape");
+
   await page.evaluate(() => {
     const btn = [...document.querySelectorAll<HTMLButtonElement>(".dock-btn")].find((b) => b.textContent === "Справка")!;
     btn.click();
   });
   await wait(300);
-  await page.screenshot({ path: "shots/3-docs.png" });
+  await page.screenshot({ path: "shots/6-docs.png" });
 
   // Лабиринт: правило правой руки, код вводится через редактор и запускается кнопкой
   await page.evaluate(() => {
@@ -104,7 +153,7 @@ try {
   });
   await page.evaluate(() => (document.querySelector(".code-win .run-btn") as HTMLButtonElement).click());
   await wait(2500);
-  await page.screenshot({ path: "shots/4-maze.png" });
+  await page.screenshot({ path: "shots/7-maze.png" });
   await wait(15000);
   const maze = await page.evaluate(() => {
     const g = (window as any).__game;
