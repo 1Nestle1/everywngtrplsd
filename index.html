@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Colonist Was Replaced</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <div id="overlay"></div>
+
+    <header id="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">The Colonist <em>Was Replaced</em></span>
+      </div>
+      <div id="inventory"></div>
+      <div class="top-right">
+        <span class="speed-label">Скорость <b id="speed">×1</b></span>
+        <button id="menu-btn" class="icon-btn" title="Меню">☰</button>
+        <div id="menu" hidden>
+          <button id="sandbox-btn">Песочница: открыть всё</button>
+          <button id="reset-btn" class="danger">Сбросить прогресс</button>
+          <a href="./3d.html">Тест производительности 3D</a>
+        </div>
+      </div>
+    </header>
+
+    <div id="windows"></div>
+
+    <footer id="bottombar">
+      <div id="goal"><span class="goal-label">Цель</span><span id="goal-text"></span></div>
+      <nav id="dock"></nav>
+    </footer>
+
+    <div id="toasts"></div>
+
+    <div id="victory" hidden>
+      <div class="victory-card">
+        <p class="victory-kicker">Маяк колонии запущен</p>
+        <h2>Колонисты летят.<br />Вас заменили не зря.</h2>
+        <p>Вы автоматизировали астероид от горстки мха до золота из лабиринта — только кодом.</p>
+        <button id="victory-close" class="run-btn">Продолжить игру</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/game/main.ts"></script>
+  </body>
+</html>

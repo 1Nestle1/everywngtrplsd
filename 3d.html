@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Прототип 3D: игра про программирование</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1116; color: #d6dde6; font-family: system-ui, sans-serif; }
+      #scene { display: block; width: 100vw; height: 100vh; }
+      #panel { position: fixed; top: 12px; left: 12px; width: 300px; padding: 12px 14px; background: rgba(14, 17, 22, 0.85); border-radius: 8px; }
+      #panel h1 { font-size: 15px; margin: 0 0 8px; }
+      #panel a { color: #4ad9ff; }
+      label { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; font-size: 13px; }
+      input[type="number"], select { width: 90px; }
+      pre { font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; margin: 8px 0 0; }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <div id="panel">
+      <h1>3D‑прототип производительности</h1>
+      <label>Размер поля
+        <select id="size">
+          <option value="32">32×32</option>
+          <option value="64" selected>64×64</option>
+          <option value="128">128×128</option>
+          <option value="256">256×256</option>
+        </select>
+      </label>
+      <label>Дронов <input id="drones" type="number" min="1" max="20000" value="200" /></label>
+      <label>Действий/с на дрона <input id="speed" type="number" min="1" max="1000" value="5" /></label>
+      <label>Тени <input id="shadows" type="checkbox" checked /></label>
+      <pre id="stats"></pre>
+      <p style="font-size: 12px; margin: 8px 0 0">
+        Мышь: вращать / колесо: зум / ПКМ: сдвиг.<br />
+        <a href="?bench=1">Автобенчмарк</a> · <a href="./demo-2d.html">2D‑версия</a> · <a href="./">Игра</a>
+      </p>
+    </div>
+    <script type="module" src="/src/main3d.ts"></script>
+  </body>
+</html>

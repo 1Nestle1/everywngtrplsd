@@ -1,0 +1,232 @@
+/* Интерфейс игры: тёмная «консоль колонии» поверх 3D-сцены.
+   Тёплый янтарь — дрон и действия, холодный циан — информация. */
+
+:root {
+  --bg: #06070c;
+  --panel: rgba(13, 15, 24, 0.9);
+  --panel-solid: #0d0f18;
+  --line: #262b44;
+  --line-strong: #3a4166;
+  --text: #e6e9f2;
+  --muted: #9aa3c0;
+  --dim: #6b7390;
+  --amber: #ffb547;
+  --amber-ink: #1c1205;
+  --cyan: #5ce1e6;
+  --red: #ff6b6b;
+  --green: #7be08a;
+  --ui: "Chakra Petch", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 500 14px/1.45 var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+
+#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#overlay { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+
+/* --- Верхняя панель --- */
+#topbar {
+  position: fixed; inset: 0 0 auto 0; height: 48px; z-index: 1000;
+  display: flex; align-items: center; gap: 20px; padding: 0 14px;
+  background: linear-gradient(to bottom, rgba(6, 7, 12, 0.95), rgba(6, 7, 12, 0.7));
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.brand-mark {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--amber); box-shadow: 0 0 12px var(--amber);
+}
+.brand-name { font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
+.brand-name em { font-style: normal; color: var(--amber); }
+#inventory { display: flex; gap: 6px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.chip {
+  font: 600 12.5px var(--mono); white-space: nowrap;
+  padding: 4px 9px; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--c);
+}
+.top-right { display: flex; align-items: center; gap: 12px; position: relative; }
+.speed-label { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.speed-label b { color: var(--amber); font-family: var(--mono); }
+#menu {
+  position: absolute; right: 0; top: 40px; width: 250px; padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+#menu button, #menu a {
+  text-align: left; padding: 8px 10px; border: 0; border-radius: 4px; background: none;
+  color: var(--text); text-decoration: none; font-size: 13px;
+}
+#menu button:hover, #menu a:hover { background: rgba(255, 255, 255, 0.06); }
+#menu .danger { color: var(--red); }
+
+.icon-btn {
+  width: 28px; height: 28px; display: grid; place-items: center; flex: none;
+  border: 1px solid transparent; border-radius: 4px; background: none; color: var(--muted);
+}
+.icon-btn:hover { color: var(--text); border-color: var(--line-strong); }
+.text-btn {
+  padding: 3px 10px; border-radius: 4px; border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.03); color: var(--muted); font-size: 12.5px;
+}
+.text-btn:hover { color: var(--text); border-color: var(--muted); }
+
+/* --- Окна --- */
+#windows { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+.win {
+  position: absolute; pointer-events: auto;
+  display: flex; flex-direction: column;
+  min-width: 260px; min-height: 120px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  resize: both; overflow: hidden;
+}
+.win-bar {
+  display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid var(--line); cursor: grab; user-select: none; flex: none;
+}
+.win-bar:active { cursor: grabbing; }
+.win-title { font-weight: 600; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.code-win .win-title { font-family: var(--mono); text-transform: none; letter-spacing: 0; color: var(--text); }
+.code-win .win-title::before { content: "▤ "; color: var(--dim); }
+.win-tools { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.win-body { flex: 1; min-height: 0; overflow: auto; }
+.win.active { border-color: rgba(255, 181, 71, 0.55); box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.25), 0 18px 50px rgba(0, 0, 0, 0.45); }
+
+.run-btn {
+  padding: 4px 12px; border-radius: 4px; border: 0;
+  background: var(--amber); color: var(--amber-ink); font-weight: 600; font-size: 12.5px;
+}
+.run-btn:hover { filter: brightness(1.1); }
+.run-btn.running { background: var(--red); color: #1a0505; }
+.run-status { font: 12px var(--mono); color: var(--amber); }
+
+.editor-host { height: 100%; }
+.editor-host .cm-editor { height: 100%; }
+.editor-host .cm-editor.cm-focused { outline: none; }
+
+/* --- Вывод --- */
+.output { padding: 8px 12px; font: 12.5px/1.6 var(--mono); height: 100%; overflow: auto; }
+.output > div { white-space: pre-wrap; word-break: break-word; }
+.out-info { color: var(--dim); }
+.out-err { color: var(--red); }
+
+/* --- Исследования --- */
+.research { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.res-row { padding: 10px 12px; border-radius: 5px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.02); }
+.res-row.done { opacity: 0.55; }
+.res-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.res-name { font-weight: 600; font-size: 14px; }
+.res-lvl { color: var(--dim); font: 12px var(--mono); }
+.res-desc { margin: 4px 0 6px; color: var(--muted); font-size: 12.5px; }
+.res-done { color: var(--green); font-size: 12px; }
+.res-hidden { color: var(--dim); font-size: 12px; text-align: center; margin: 6px 0; }
+.buy-btn {
+  padding: 4px 12px; border-radius: 4px; border: 1px solid var(--cyan);
+  background: rgba(92, 225, 230, 0.12); color: var(--cyan); font-weight: 600; font-size: 12.5px;
+}
+.buy-btn:hover:not(:disabled) { background: rgba(92, 225, 230, 0.25); }
+.buy-btn:disabled { border-color: var(--line-strong); background: none; color: var(--dim); cursor: not-allowed; }
+.cost { display: flex; flex-wrap: wrap; gap: 4px; }
+.cost-item {
+  font: 600 11.5px var(--mono); padding: 2px 7px; border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04); border-left: 2px solid var(--c);
+}
+.cost-item.short { color: var(--red); }
+
+/* --- Справка --- */
+.docs { padding: 4px 16px 16px; font-size: 13px; }
+.docs h3 { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin: 16px 0 6px; }
+.docs p { color: var(--muted); margin: 0; }
+.doc-list { margin: 0; padding-left: 18px; color: var(--text); }
+.doc-list .locked, .doc-fn.locked { color: var(--dim); }
+.doc-lock { color: var(--dim); }
+.doc-fns { display: flex; flex-direction: column; gap: 6px; }
+.doc-fn { display: grid; grid-template-columns: 170px 1fr; gap: 10px; color: var(--muted); }
+.doc-fn code { font: 12px var(--mono); color: var(--cyan); word-break: break-all; }
+.doc-fn.locked code { color: var(--dim); }
+
+/* --- Нижняя панель --- */
+#bottombar {
+  position: fixed; inset: auto 0 0 0; z-index: 1000; pointer-events: none;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 12px 14px;
+}
+#goal {
+  pointer-events: auto; max-width: 520px; padding: 10px 14px;
+  background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: var(--radius);
+  display: flex; gap: 12px; align-items: baseline; font-size: 13px;
+}
+.goal-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); flex: none; }
+#dock {
+  pointer-events: auto; display: flex; gap: 4px; align-items: center; padding: 5px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.dock-btn {
+  padding: 5px 11px; border-radius: 4px; border: 1px solid transparent; background: none;
+  color: var(--muted); font-size: 12.5px;
+}
+.dock-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+.dock-btn.on { color: var(--text); border-color: var(--line-strong); background: rgba(255, 255, 255, 0.04); }
+.dock-btn.add { color: var(--amber); }
+.dock-sep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 4px; }
+
+/* --- Оверлеи сцены --- */
+.bubble {
+  position: absolute; left: 0; top: 0; max-width: 260px;
+  padding: 5px 10px; border-radius: 6px;
+  background: rgba(13, 15, 24, 0.92); border: 1px solid var(--line-strong);
+  font: 12.5px var(--mono); color: var(--text); white-space: pre-wrap; opacity: 0;
+}
+.popup {
+  position: absolute; left: 0; top: 0;
+  font: 700 13px var(--mono); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); white-space: nowrap;
+}
+
+/* --- Уведомления --- */
+#toasts { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.toast {
+  padding: 8px 14px; border-radius: var(--radius); font-size: 13px; max-width: 560px;
+  background: var(--panel-solid); border: 1px solid var(--line-strong);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: toast-in 0.25s ease-out;
+  transition: opacity 0.4s, transform 0.4s;
+}
+.toast.out { opacity: 0; transform: translateY(-6px); }
+.toast-ok { border-color: var(--green); color: var(--green); }
+.toast-err { border-color: var(--red); color: #ffc9c9; }
+.toast-info { border-color: var(--cyan); color: var(--cyan); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* --- Победа --- */
+#victory {
+  position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 181, 71, 0.18), rgba(6, 7, 12, 0.85) 60%);
+}
+.victory-card {
+  max-width: 480px; padding: 32px 36px; text-align: left;
+  background: var(--panel-solid); border: 1px solid rgba(255, 181, 71, 0.5); border-radius: 10px;
+}
+.victory-kicker { margin: 0; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.victory-card h2 { margin: 10px 0 12px; font-size: 30px; line-height: 1.15; }
+.victory-card p { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; transition: none; }
+}

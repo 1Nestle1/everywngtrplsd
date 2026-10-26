@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  padding: 24px;
+  background: #14171c;
+  color: #d6dde6;
+  font-family: system-ui, sans-serif;
+}
+main {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+canvas {
+  background: #0b0d10;
+  image-rendering: pixelated;
+}
+label {
+  display: block;
+  margin: 8px 0;
+}
+pre {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+button {
+  padding: 6px 12px;
+}
